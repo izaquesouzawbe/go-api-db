@@ -12,11 +12,11 @@ func getDB() *sql.DB {
 		config.Database.User, config.Database.Password, config.Database.DBName,
 		config.Database.Host, config.Database.SSLMode)
 
+	fmt.Println(connStr)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
 
 	return db
 }
