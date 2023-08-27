@@ -10,6 +10,8 @@ import (
 func main() {
 
 	db := config.GetDB()
+	defer db.Close()
+
 	router := gin.Default()
 
 	routes.RouteSelect(router, db)

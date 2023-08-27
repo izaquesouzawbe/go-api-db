@@ -7,12 +7,15 @@ import (
 	"go-api-db/config"
 	"log"
 	"net/http"
+	"reflect"
+	"strconv"
 	"strings"
 )
 
 func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
 
 	router.POST("/execute-insert-transaction", authorize(config.ConfigVar.Server.Authorization), func(c *gin.Context) {
+
 		var requestBody config.InsertRequest
 		if err := c.ShouldBindJSON(&requestBody); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -31,6 +34,7 @@ func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
 		}
 
 		var successfulInserts int
+		querys := ""
 
 		for _, record := range requestBody.Records {
 			columns := ""
@@ -48,7 +52,13 @@ func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
 					values += ", "
 				}
 				columns += col
-				values += fmt.Sprintf("$%d", len(args)+1)
+
+				if reflect.TypeOf(val).String() == "string" {
+					values += "'" + val.(string) + "'"
+				} else {
+					values += strconv.FormatFloat(val.(float64), 'f', -1, 64)
+				}
+
 				args = append(args, val)
 
 				if !contains(primaryKeyColumns, col) {
@@ -57,21 +67,25 @@ func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
 			}
 
 			query += "(" + columns + ") VALUES (" + values + ")"
+			fmt.Println(query)
 
 			if primaryKeyColumns != nil && len(primaryKeyColumns) > 0 {
 				query += " ON CONFLICT (" + strings.Join(primaryKeyColumns, ", ") +
 					") DO UPDATE SET " + strings.Join(upsertColumns, ", ")
 			}
 
-			_, err := tx.Exec(query, args...)
-			if err != nil {
-				tx.Rollback()
-				log.Printf("Erro na inserção: %s", err.Error())
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro na transação"})
-				return
-			} else {
-				successfulInserts++
-			}
+			querys += query + ";"
+
+		}
+
+		_, err = tx.Exec(querys)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Erro na inserção: %s", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro na transação"})
+			return
+		} else {
+			successfulInserts++
 		}
 
 		err = tx.Commit()
