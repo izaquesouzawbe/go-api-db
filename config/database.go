@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"database/sql"
@@ -6,11 +6,11 @@ import (
 	"log"
 )
 
-func getDB() *sql.DB {
+func GetDB() *sql.DB {
 
 	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=%s",
-		config.Database.User, config.Database.Password, config.Database.DBName,
-		config.Database.Host, config.Database.SSLMode)
+		ConfigVar.Database.User, ConfigVar.Database.Password, ConfigVar.Database.DBName,
+		ConfigVar.Database.Host, ConfigVar.Database.SSLMode)
 
 	fmt.Println(connStr)
 	db, err := sql.Open("postgres", connStr)

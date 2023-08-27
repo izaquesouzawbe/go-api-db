@@ -1,4 +1,4 @@
-package main
+package routes
 
 func contains(slice []string, element string) bool {
 	for _, e := range slice {

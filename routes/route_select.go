@@ -1,17 +1,18 @@
-package main
+package routes
 
 import (
 	"database/sql"
+	"go-api-db/config"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func routeSelect(router *gin.Engine, db *sql.DB) {
+func RouteSelect(router *gin.Engine, db *sql.DB) {
 
-	router.POST("/execute-select", authorize(config.Server.Authorization), func(c *gin.Context) {
+	router.POST("/execute-select", authorize(config.ConfigVar.Server.Authorization), func(c *gin.Context) {
 
-		var requestBodySQL RequestBodySQL
+		var requestBodySQL config.RequestBodySQL
 
 		if err := c.ShouldBindJSON(&requestBodySQL); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

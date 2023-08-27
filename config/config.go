@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"gopkg.in/yaml.v3"
@@ -7,21 +7,22 @@ import (
 	"os"
 )
 
-var config = getConfig()
+var ConfigVar = getConfig()
 
 func getConfig() Config {
+
 	var config Config
 
-	configFile, err := os.Open("config.yaml")
+	configFile, err := os.Open("./config.yaml")
 	if err != nil {
-		log.Fatalf("Failed to open config file: %v", err)
+		log.Fatalf("Failed to open ConfigVar file: %v", err)
 	}
 	defer configFile.Close()
 
 	byteValue, _ := ioutil.ReadAll(configFile)
 	err = yaml.Unmarshal(byteValue, &config)
 	if err != nil {
-		log.Fatalf("Failed to unmarshal config: %v", err)
+		log.Fatalf("Failed to unmarshal ConfigVar: %v", err)
 	}
 
 	return config
