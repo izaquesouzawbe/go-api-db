@@ -1,4 +1,5 @@
 database:
+  typedb: postgres
   user: postgres
   password: 1234
   dbname: postgres

@@ -2,7 +2,7 @@ package routes
 
 import (
 	"database/sql"
-	"go-api-db/config"
+	config2 "go-api-db/internal/config"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,9 +10,9 @@ import (
 
 func RouteExecuteSQL(router *gin.Engine, db *sql.DB) {
 
-	router.POST("/execute-sql", authorize(config.ConfigVar.Server.Authorization), func(c *gin.Context) {
+	router.POST("/execute-sql", authorize(config2.ConfigVar.Server.Authorization), func(c *gin.Context) {
 
-		var requestBody config.RequestBodySQL
+		var requestBody config2.RequestBodySQL
 
 		if err := c.ShouldBindJSON(&requestBody); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

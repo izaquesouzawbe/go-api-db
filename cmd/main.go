@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"go-api-db/config"
-	"go-api-db/routes"
+	"go-api-db/internal/config"
+	"go-api-db/internal/routes"
 )
 
 func main() {

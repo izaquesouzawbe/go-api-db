@@ -3,20 +3,19 @@ package routes
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"go-api-db/config"
+	config2 "go-api-db/internal/config"
 	"log"
 	"net/http"
-	"reflect"
-	"strconv"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
-func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
+func RouteInsert(router *gin.Engine, db *sql.DB) {
 
-	router.POST("/execute-insert-transaction", authorize(config.ConfigVar.Server.Authorization), func(c *gin.Context) {
+	router.POST("/execute-insert", authorize(config2.ConfigVar.Server.Authorization), func(c *gin.Context) {
 
-		var requestBody config.InsertRequest
+		var requestBody config2.InsertRequest
 		if err := c.ShouldBindJSON(&requestBody); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -27,14 +26,7 @@ func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
 			return
 		}
 
-		tx, err := db.Begin()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao iniciar a transação"})
-			return
-		}
-
 		var successfulInserts int
-		querys := ""
 
 		for _, record := range requestBody.Records {
 			columns := ""
@@ -52,13 +44,7 @@ func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
 					values += ", "
 				}
 				columns += col
-
-				if reflect.TypeOf(val).String() == "string" {
-					values += "'" + val.(string) + "'"
-				} else {
-					values += strconv.FormatFloat(val.(float64), 'f', -1, 64)
-				}
-
+				values += fmt.Sprintf("$%d", len(args)+1)
 				args = append(args, val)
 
 				if !contains(primaryKeyColumns, col) {
@@ -67,31 +53,18 @@ func RouteInsertTransaction(router *gin.Engine, db *sql.DB) {
 			}
 
 			query += "(" + columns + ") VALUES (" + values + ")"
-			fmt.Println(query)
 
 			if primaryKeyColumns != nil && len(primaryKeyColumns) > 0 {
-				query += " ON CONFLICT (" + strings.Join(primaryKeyColumns, ", ") +
+				query += "ON CONFLICT (" + strings.Join(primaryKeyColumns, ", ") +
 					") DO UPDATE SET " + strings.Join(upsertColumns, ", ")
 			}
 
-			querys += query + ";"
-
-		}
-
-		_, err = tx.Exec(querys)
-		if err != nil {
-			tx.Rollback()
-			log.Printf("Erro na inserção: %s", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro na transação"})
-			return
-		} else {
-			successfulInserts++
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao confirmar a transação"})
-			return
+			_, err := db.Exec(query, args...)
+			if err != nil {
+				log.Printf("Erro na inserção: %s", err.Error())
+			} else {
+				successfulInserts++
+			}
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("%d registros inseridos/atualizados com sucesso", successfulInserts)})

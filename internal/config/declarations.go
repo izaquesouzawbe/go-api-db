@@ -2,6 +2,7 @@ package config
 
 type Config struct {
 	Database struct {
+		TypeDB   string `yaml:"typedb"`
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 		DBName   string `yaml:"dbname"`
